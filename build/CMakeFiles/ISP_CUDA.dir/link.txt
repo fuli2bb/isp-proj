@@ -1,0 +1,2 @@
+/usr/bin/ar qc libISP_CUDA.a  CMakeFiles/ISP_CUDA.dir/include/isp_cuda_func.cu.o
+/usr/bin/ranlib libISP_CUDA.a
