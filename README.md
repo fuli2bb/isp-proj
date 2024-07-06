@@ -1,5 +1,8 @@
 ## Overview
 
+![simple isp](images/isp_readme.png)
+
+
 This is a simple project focused on developing algorithms for a camera imaging pipeline. 
 The project references [this repository](https://github.com/mushfiqulalam/isp) and utilizes raw image data and the pipeline framework. 
 A C++ implementation was developed using OpenCV, and CUDA implementations for certain time-consuming functions were developed. 
@@ -22,12 +25,13 @@ For studying purpose, this project avoids directly using OpenCV's built-in featu
 
 ## Features
 
-- **Image Enhancement:** Techniques for improving the visual quality of images.
-- **Noise Reduction:** Methods to remove or reduce noise from images.
-- **Edge Detection:** Algorithms to identify and highlight edges in images.
-- **Image Filtering:** Application of various filters to images for different effects.
-- **Transformation:** Geometric transformations such as rotation, scaling, and translation.
-- **Detailed Console Output:** Comprehensive logs and process tracking for debugging and analysis.
+- **Black Level Correction:** Adjust pixel values to accurately represent the darkest areas in an image, eliminating any offset caused by the camera sensor. For each (R, Gr, Gb, B) data point, correct the offset using the formula:
+ \[\frac{{\text{pixel\_val} - \text{black\_level}}}{{\text{white\_level} - \text{black\_level}}} \times (2^{\text{bit\_depth}} - 1)
+  \]
+
+- **Bad pixel correction:** Utilizes a median filter to correct pixel values. Pixels that significantly deviate from the median value of their neighboring pixels are replaced with the median value.
+- **Channel gain while balance:** Algorithms to identify and highlight edges in images.
+- **Demosaic:** Application of various filters to images for different effects.
 
 ### Prerequisites
 
@@ -50,3 +54,8 @@ mkdir build
 ```bash
 ./build/isp config.ini
 ```
+
+### CUDA functions
+
+At this moment, CUDA implementation of bad_pixel_correction and histogram equalizition functions were provided. Below is a comparsion of runing time between cpu code and  gpu code.
+
