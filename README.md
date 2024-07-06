@@ -1,6 +1,6 @@
 ## Overview
 
-This is a study project focused on developing algorithms for a camera imaging pipeline. 
+This is a simple project focused on developing algorithms for a camera imaging pipeline. 
 The project references [this repository](https://github.com/mushfiqulalam/isp) and utilizes raw image data and the pipeline framework. 
 A C++ implementation was developed using OpenCV, and CUDA implementations for certain time-consuming functions were developed. 
 For studying purpose, this project avoids directly using OpenCV's built-in features and functions, mainly using `cv::Mat` as a container.
@@ -44,8 +44,9 @@ cd isp-proj
 rm -rf build
 mkdir build
 ./build.sh
-
+```
 ### Run command
 
 ```bash
 ./build/isp config.ini
+```
