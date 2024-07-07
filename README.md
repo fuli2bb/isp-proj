@@ -104,8 +104,7 @@ mkdir build
 
 ### CUDA functions
 
-At this moment, CUDA implementations of bad_pixel_correction and histogram equalization functions were provided. Below is a comparison of running times between CPU and GPU code.
-
+At this moment, CUDA implementations of bad_pixel_correction and histogram equalization functions were provided. Below is a comparison of running times between CPU and GPU code. （test on cuda 10 and a geforce rtx 2080 ti gpu).
 - **Bad pixel correction** function 
   | Image size | 768x512  | 2048x2048 | 6032x4032 |
   |------------|----------|-----------|-----------|
