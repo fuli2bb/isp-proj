@@ -26,16 +26,18 @@ For studying purpose, this project avoids directly using OpenCV's built-in featu
 ## Features
 
 
-- **Black Level Correction:** Adjusts pixel values to accurately represent the darkest areas in an image, eliminating any offset caused by the camera sensor. For each (R, Gr, Gb, B) data point, the offset is corrected using the formula:
-  \[
+ - **Black Level Correction:** Adjusts pixel values to accurately represent the darkest areas in an image, eliminating any offset caused by the camera sensor. For each (R, Gr, Gb, B) data point, the offset is corrected using the formula:
+
+  ```math 
   \text{corrected\_val} = \frac{{\text{pixel\_val} - \text{black\_level}}}{{\text{white\_level} - \text{black\_level}}} \times (2^{\text{bit\_depth}} - 1)
-  \]
+```
   This normalization ensures that the pixel values are accurately scaled between the black and white levels of the sensor.
 
 - **Bad Pixel Correction:** Utilizes a median filter to correct pixel values. Pixels that significantly deviate from the median value of their neighboring pixels are identified as bad pixels and are replaced with the median value of their neighborhood. This helps in reducing noise and artifacts caused by defective pixels in the sensor.
 
-- **Channel Gain White Balance:** Applies gain to each channel to balance the color. The transformation is defined as:
-  \[
+- **Channel Gain White Balance:**
+  Applies gain to each channel to balance the color. The transformation is defined as:
+```math
   \begin{bmatrix}
   R_{\text{out}} \\
   G_{\text{out}} \\
@@ -52,20 +54,32 @@ For studying purpose, this project avoids directly using OpenCV's built-in featu
   G_{\text{in}} \\
   B_{\text{in}}
   \end{bmatrix}
-  \]
-  The gain for each channel \([r_g, g_g, b_g]\) can be computed by the maximum brightness point method, which finds the values corresponding to white color. The gains are determined as:
-  \[
+
+```
+   One way to obatin the gains for each channel \([r_g, g_g, b_g]\) can be computed by the maximum brightness point method, which finds the values corresponding to white color. The gains are determined as:
+ ```math
   [r_g, g_g, b_g] = \left[\frac{R_{\text{white}}}{R_{\text{max}}}, \frac{G_{\text{white}}}{G_{\text{max}}}, \frac{B_{\text{white}}}{B_{\text{max}}}\right]
-  \]
-  This ensures that the white balance is correctly adjusted, making the colors in the image appear natural.
+```
+- **Demosaic:**: Converts the Bayer pattern image into a RGB image. Two methods were implemented (1) Bilinear interpolation, and directionally weighted gradient based interpolation.
 
-- **Demosaic:** Converts the Bayer pattern image into a full-color image. The Bayer pattern captures images with a single color channel per pixel (R, G, or B), and the demosaicing process interpolates the missing color channels for each pixel to produce a complete RGB image. This step is crucial for converting raw sensor data into a usable image with accurate colors.
+- **Local color ratio**: To enhance the quality of the demosaicing process by using local color ratio adjustments. Details steps are desribed in the end the note (Appendix).
+  
+- **Apply color matrix**: To performing color correction on an image by applying a color correction matrix.
+```math
+R_{\text{corrected}}(i, j) =  R(i, j) \cdot \text{cam2rgb}_{00} + G(i, j) \cdot \text{cam2rgb}_{01} + B(i, j) \cdot \text{cam2rgb}_{02})
+```
+```math
+G_{\text{corrected}}(i, j) =  R(i, j) \cdot \text{cam2rgb}_{10} + G(i, j) \cdot \text{cam2rgb}_{11} + B(i, j) \cdot \text{cam2rgb}_{12})
+```
+```math
+B_{\text{corrected}}(i, j) =  R(i, j) \cdot \text{cam2rgb}_{20} + G(i, j) \cdot \text{cam2rgb}_{21} + B(i, j) \cdot \text{cam2rgb}_{22})
+```
 
-These features are essential components of an Image Signal Processing (ISP) pipeline, which collectively enhance the quality and accuracy of the captured images, making them suitable for further processing and analysis.
-
-
-
-
+- ** Gamma: ** To enhance brightness by applying some non-linear logarithm and exp operations.
+  
+- ** Tone mapping ** See N. Moroney, “Local color correction using non-linear masking”.
+  
+- ** Sharpenging ** (2 x original image - blurred one)
 ### Prerequisites
 
 - C++ compiler (e.g., GCC, Clang)
@@ -91,4 +105,88 @@ mkdir build
 ### CUDA functions
 
 At this moment, CUDA implementation of bad_pixel_correction and histogram equalizition functions were provided. Below is a comparsion of runing time between cpu code and  gpu code.
+
+
+
+
+
+
+### Appendix A. Local color ratio
+
+1. **Initialization**:
+    - Add `beta` to the data to avoid division by zero.
+      ```math
+      \text{data\_beta}(i, j) = \text{data}(i, j) + \beta
+      ```
+
+2. **Define Convolution Kernels**:
+    ```math
+    \text{zeta1} = \begin{pmatrix}
+    0 & 0.25 & 0 \\
+    0.25 & 0 & 0.25 \\
+    0 & 0.25 & 0 
+    \end{pmatrix}, \quad \text{zeta2} = \begin{pmatrix}
+    0.25 & 0 & 0.25 \\
+    0 & 0 & 0 \\
+    0.25 & 0 & 0.25 
+    \end{pmatrix}
+    ```
+
+
+3. **Compute Local Color Ratios**:
+    - Green over Blue ratio:
+      ```math
+      G_{B}(i, j) = \frac{G(i, j)}{B(i, j)}
+      ```
+    - Green over Red ratio:
+      ```math
+      G_{R}(i, j) = \frac{G(i, j)}{R(i, j)}
+      ```
+    - Blue over Green ratio smoothed by `zeta2`:
+      ```math
+      B_{G2}(i, j) = \text{convolve}\left(\frac{B(i, j)}{G(i, j)}, \text{zeta2}\right)
+      ```
+    - Red over Green ratio smoothed by `zeta2`:
+      ```math
+      R_{G2}(i, j) = \text{convolve}\left(\frac{R(i, j)}{G(i, j)}, \text{zeta2}\right)
+      ```
+    - Blue over Green ratio smoothed by `zeta1`:
+      ```math
+      B_{G1}(i, j) = \text{convolve}\left(\frac{B(i, j)}{G(i, j)}, \text{zeta1}\right)
+      ```
+    - Red over Green ratio smoothed by `zeta1`:
+      ```math
+      R_{G1}(i, j) = \text{convolve}\left(\frac{R(i, j)}{G(i, j)}, \text{zeta1}\right)
+      ```
+
+4. **Apply Color Ratio Adjustments**:
+    - For Bayer pattern "rggb":
+    
+        - **Green at Blue locations**:
+          ```math
+          G(i, j) = -\beta + B(i, j) \cdot G_{B}(i, j)
+          ```
+        - **Green at Red locations**:
+          ```math
+          G(i, j) = -\beta + R(i, j) \cdot G_{R}(i, j)
+          ```
+        - **Blue at Red locations**:
+          ```math
+          B(i, j) = -\beta + G(i, j) \cdot B_{G2}(i, j)
+          ```
+        - **Red at Blue locations**:
+          ```math
+          R(i, j) = -\beta + G(i, j) \cdot R_{G2}(i, j)
+          ```
+        - **Blue at Green locations**:
+          ```math
+          B(i, j) = -\beta + G(i, j) \cdot B_{G1}(i, j)
+          ```
+        - **Red at Green locations**:
+          ```math
+          R(i, j) = -\beta + G(i, j) \cdot R_{G1}(i, j)
+          ```
+
+
+
 
