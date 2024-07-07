@@ -1,4 +1,4 @@
-## Overview
+## Project Overview: camera image processing pipeline
 
 ![simple isp](images/isp_readme.png)
 
