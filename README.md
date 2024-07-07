@@ -75,11 +75,11 @@ G_{\text{corrected}}(i, j) =  R(i, j) \cdot \text{cam2rgb}_{10} + G(i, j) \cdot 
 B_{\text{corrected}}(i, j) =  R(i, j) \cdot \text{cam2rgb}_{20} + G(i, j) \cdot \text{cam2rgb}_{21} + B(i, j) \cdot \text{cam2rgb}_{22})
 ```
 
-- ** Gamma: ** To enhance brightness by applying some non-linear logarithm and exp operations.
+- **Gamma:** To enhance brightness by applying some non-linear logarithm and exp operations.
   
-- ** Tone mapping ** See N. Moroney, “Local color correction using non-linear masking”.
+- **Tone mapping** See N. Moroney, “Local color correction using non-linear masking”.
   
-- ** Sharpenging ** (2 x original image - blurred one)
+- **Sharpenging** (2 x original image - blurred one)
 ### Prerequisites
 
 - C++ compiler (e.g., GCC, Clang)
@@ -104,10 +104,21 @@ mkdir build
 
 ### CUDA functions
 
-At this moment, CUDA implementation of bad_pixel_correction and histogram equalizition functions were provided. Below is a comparsion of runing time between cpu code and  gpu code.
+At this moment, CUDA implementations of bad_pixel_correction and histogram equalization functions were provided. Below is a comparison of running times between CPU and GPU code.
 
+- **Bad pixel correction** function 
+  | Image size | 768x512  | 2048x2048 | 6032x4032 |
+  |------------|----------|-----------|-----------|
+  | CPU        | 0.547 s  | 5.24 s    | 30.65 s   |
+  | CUDA       | 0.0952 s | 0.1686 s  | 0.588 s   |
 
+- **Equalize hist** function 
+  | Image size | 768x512  | 2048x2048 | 6032x4032 |
+  |------------|----------|-----------|-----------|
+  | CPU        | 0.029 s  | 0.267 s   | 1.64 s    |
+  | CUDA       | 0.004 s  | 0.027 s   | 0.32 s    |
 
+For the equalization of the histogram function, the CUDA implementation can be further accelerated by considering [this approach](https://developer.nvidia.com/gpugems/gpugems3/part-vi-gpu-computing/chapter-39-parallel-prefix-sum-scan-cuda).
 
 
 
